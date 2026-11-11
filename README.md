@@ -2,7 +2,7 @@
 
 ## SIM-KDO — Aplikasi Pengelolaan Kendaraan Dinas Operasional
 
-Aplikasi ini dibangun menggunakan VSCode + Antigravity dengan model Gemini Flash 3.8, Argon, Claude Opus 5.5
+Aplikasi ini dibangun menggunakan VSCode + Antigravity dengan model Claude Opus 5.5
 
 Aplikasi web untuk pendataan **kendaraan dinas operasional (KDO)** milik perangkat daerah:
 
@@ -228,26 +228,26 @@ Semua foreign key memakai `ON DELETE RESTRICT`. Index: seluruh FK, `kendaraan_di
 
 ## Endpoint API (prefix `/api/v1`)
 
-| Method | Endpoint | Keterangan |
-| --- | --- | --- |
-| GET | `/perangkat-daerah` | list + `jumlah_pegawai` & `jumlah_kendaraan`; `search`, `sort` (`nama`, `jumlah_pegawai`, `jumlah_kendaraan`, `created_at`) |
-| GET | `/perangkat-daerah/:id` | detail + `rekap_kondisi` |
-| POST | `/perangkat-daerah` | tambah |
-| PUT | `/perangkat-daerah/:id` | ubah |
-| DELETE | `/perangkat-daerah/:id` | hapus (409 bila masih memiliki pegawai/kendaraan) |
-| GET | `/pegawai` | list; filter `perangkat_daerah_id`, `golongan`; sort `nama`, `golongan`, `nip`, `jabatan` |
-| GET | `/pegawai/:id` | detail + `perangkat_daerah` + `kendaraan` yang dipegang |
-| POST | `/pegawai` | tambah |
-| PUT | `/pegawai/:id` | ubah (pindah PD ditolak bila masih penanggung jawab) |
-| DELETE | `/pegawai/:id` | hapus (409 bila masih penanggung jawab) |
-| GET | `/kendaraan` | list; filter `kondisi`, `perangkat_daerah_id`, `pegawai_id`, `tahun_produksi`, `tanpa_penanggung_jawab`; sort `nomor_polisi`, `merek`, `tipe_model`, `tahun_produksi`, `kondisi` |
-| GET | `/kendaraan/:id` | detail + `perangkat_daerah` + `penanggung_jawab` |
-| POST | `/kendaraan` | tambah |
-| PUT | `/kendaraan/:id` | ubah |
-| PATCH | `/kendaraan/:id/kondisi` | ubah kondisi saja |
-| DELETE | `/kendaraan/:id` | hapus |
-| GET | `/dashboard/ringkasan` | angka ringkasan + rekap kondisi per perangkat daerah (agregasi SQL `COUNT … FILTER` + `GROUP BY`) |
-| GET | `/health` | health check termasuk koneksi database |
+| Method | Endpoint                 | Keterangan                                                                                                                                                                       |
+| ------ | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/perangkat-daerah`      | list + `jumlah_pegawai` & `jumlah_kendaraan`; `search`, `sort` (`nama`, `jumlah_pegawai`, `jumlah_kendaraan`, `created_at`)                                                      |
+| GET    | `/perangkat-daerah/:id`  | detail + `rekap_kondisi`                                                                                                                                                         |
+| POST   | `/perangkat-daerah`      | tambah                                                                                                                                                                           |
+| PUT    | `/perangkat-daerah/:id`  | ubah                                                                                                                                                                             |
+| DELETE | `/perangkat-daerah/:id`  | hapus (409 bila masih memiliki pegawai/kendaraan)                                                                                                                                |
+| GET    | `/pegawai`               | list; filter `perangkat_daerah_id`, `golongan`; sort `nama`, `golongan`, `nip`, `jabatan`                                                                                        |
+| GET    | `/pegawai/:id`           | detail + `perangkat_daerah` + `kendaraan` yang dipegang                                                                                                                          |
+| POST   | `/pegawai`               | tambah                                                                                                                                                                           |
+| PUT    | `/pegawai/:id`           | ubah (pindah PD ditolak bila masih penanggung jawab)                                                                                                                             |
+| DELETE | `/pegawai/:id`           | hapus (409 bila masih penanggung jawab)                                                                                                                                          |
+| GET    | `/kendaraan`             | list; filter `kondisi`, `perangkat_daerah_id`, `pegawai_id`, `tahun_produksi`, `tanpa_penanggung_jawab`; sort `nomor_polisi`, `merek`, `tipe_model`, `tahun_produksi`, `kondisi` |
+| GET    | `/kendaraan/:id`         | detail + `perangkat_daerah` + `penanggung_jawab`                                                                                                                                 |
+| POST   | `/kendaraan`             | tambah                                                                                                                                                                           |
+| PUT    | `/kendaraan/:id`         | ubah                                                                                                                                                                             |
+| PATCH  | `/kendaraan/:id/kondisi` | ubah kondisi saja                                                                                                                                                                |
+| DELETE | `/kendaraan/:id`         | hapus                                                                                                                                                                            |
+| GET    | `/dashboard/ringkasan`   | angka ringkasan + rekap kondisi per perangkat daerah (agregasi SQL `COUNT … FILTER` + `GROUP BY`)                                                                                |
+| GET    | `/health`                | health check termasuk koneksi database                                                                                                                                           |
 
 Semua list menerima `page`, `per_page` (maks 100), `search`, dan `sort` (awali `-` untuk menurun,
 mis. `-tahun_produksi`). ID di path divalidasi sebagai UUID (format salah → 422). Dokumentasi
