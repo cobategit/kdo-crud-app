@@ -1,0 +1,33 @@
+{
+  "name": "@kdo/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "dev": "bun --env-file=../.env --watch src/index.ts",
+    "build": "tsc --noEmit && bun build src/index.ts src/db/migrate.ts src/db/seed.ts --target bun --outdir dist --root src && rm -rf dist/db/migrations && cp -R src/db/migrations dist/db/migrations",
+    "start": "bun dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "bun --env-file=../.env test",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "bun --env-file=../.env src/db/migrate.ts",
+    "db:seed": "bun --env-file=../.env src/db/seed.ts",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "1.4.3",
+    "@elysiajs/openapi": "1.4.17",
+    "drizzle-orm": "0.45.4",
+    "elysia": "1.4.31",
+    "postgres": "3.4.9"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.4",
+    "drizzle-kit": "0.31.11",
+    "typescript": "5.9.3"
+  }
+}
