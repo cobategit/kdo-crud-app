@@ -1,5 +1,9 @@
 # Ujian Praktek Junior Programmer - BPAD
 
+## Pemberitahuan
+
+Saya siap bertanggung jawab walaupun pembuatan ini menggunakan AI, karena juga keterbatasan waktu, lalu juga zaman sudah semakin canggih, maka dari ini saya full menggunakan AI. Terimakasih Bapak/Ibu Penguji :D
+
 ## SIM-KDO — Aplikasi Pengelolaan Kendaraan Dinas Operasional
 
 Aplikasi ini dibangun menggunakan VSCode + Antigravity dengan model Claude Opus 5.5
