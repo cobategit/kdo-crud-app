@@ -3,10 +3,19 @@ import { openapi } from '@elysiajs/openapi'
 import { Elysia } from 'elysia'
 import { env } from './config/env'
 import { errorHandler } from './lib/error-handler'
+import { dashboardRoutes } from './modules/dashboard/routes'
 import { healthRoutes } from './modules/health'
+import { kendaraanRoutes } from './modules/kendaraan/routes'
+import { pegawaiRoutes } from './modules/pegawai/routes'
+import { perangkatDaerahRoutes } from './modules/perangkat-daerah/routes'
 
-/** Router API versi 1. Modul entitas didaftarkan di sini per fase. */
-export const apiV1 = new Elysia({ prefix: '/api/v1' }).use(healthRoutes)
+/** Router API versi 1. */
+export const apiV1 = new Elysia({ prefix: '/api/v1' })
+  .use(healthRoutes)
+  .use(perangkatDaerahRoutes)
+  .use(pegawaiRoutes)
+  .use(kendaraanRoutes)
+  .use(dashboardRoutes)
 
 export function createApp() {
   return new Elysia()
@@ -28,7 +37,13 @@ export function createApp() {
             description:
               'REST API untuk pendataan kendaraan dinas operasional, pegawai penanggung jawab, dan perangkat daerah.',
           },
-          tags: [{ name: 'Health', description: 'Status layanan' }],
+          tags: [
+            { name: 'Perangkat Daerah', description: 'Instansi pemilik/pengguna kendaraan' },
+            { name: 'Pegawai', description: 'Pegawai & penanggung jawab kendaraan' },
+            { name: 'Kendaraan Dinas', description: 'Data kendaraan dinas operasional' },
+            { name: 'Dashboard', description: 'Ringkasan kondisi kendaraan' },
+            { name: 'Health', description: 'Status layanan' },
+          ],
         },
       }),
     )

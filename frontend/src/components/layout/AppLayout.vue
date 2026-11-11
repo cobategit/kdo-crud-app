@@ -113,7 +113,10 @@ watch(
         >
           <AppIcon name="menu" />
         </button>
-        <h1 class="truncate text-base font-semibold text-slate-900 sm:text-lg">{{ pageTitle }}</h1>
+        <p class="truncate text-base font-semibold text-slate-900 lg:hidden">{{ pageTitle }}</p>
+        <p class="hidden truncate text-sm text-slate-500 lg:block">
+          Pengelolaan Kendaraan Dinas Operasional &middot; Pemerintah Daerah
+        </p>
       </header>
 
       <main class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">

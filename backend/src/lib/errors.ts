@@ -54,6 +54,19 @@ export class InvalidPenanggungJawabError extends AppError {
   }
 }
 
+/** Pastikan nilai query termasuk daftar yang diizinkan; bila tidak, lempar VALIDASI_GAGAL. */
+export function assertOneOf<T extends string>(
+  value: string | undefined,
+  allowed: readonly T[],
+  field: string,
+): T | undefined {
+  if (value === undefined || value === '') return undefined
+  if ((allowed as readonly string[]).includes(value)) return value as T
+  throw new ValidationError('Data tidak valid', [
+    { field, message: `${field} harus salah satu dari: ${allowed.join(', ')}` },
+  ])
+}
+
 /** Pemetaan nama unique constraint PostgreSQL → field & pesan yang ramah pengguna. */
 const UNIQUE_CONSTRAINTS: Record<string, { field: string; message: string }> = {
   perangkat_daerah_nama_lower_uq: {

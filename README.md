@@ -2,14 +2,36 @@
 
 ## SIM-KDO — Aplikasi Pengelolaan Kendaraan Dinas Operasional
 
+Aplikasi ini dibangun menggunakan VSCode + Antigravity dengan model Gemini Flash 3.8, Argon, Claude Opus 5.5
+
 Aplikasi web untuk pendataan **kendaraan dinas operasional (KDO)** milik perangkat daerah:
 
 1. Mengetahui **kondisi** setiap kendaraan (Baik, Rusak Ringan, Rusak Berat).
 2. Mengetahui **perangkat daerah** pemilik/pengguna kendaraan.
 3. Mencatat **pegawai penanggung jawab** penggunaan kendaraan.
 
-> Status pengembangan: **Fase 0 (Setup) selesai.** Modul CRUD dikerjakan bertahap pada fase 1–5
-> (lihat [Roadmap](#roadmap)).
+> Status: **Fase 0–5 selesai** — CRUD lengkap Perangkat Daerah, Pegawai, Kendaraan Dinas,
+> dashboard ringkasan, dokumentasi OpenAPI, dan test backend/frontend.
+
+## Fitur
+
+- **Dashboard** — kartu ringkasan (total kendaraan, Baik / Rusak Ringan / Rusak Berat, tanpa
+  penanggung jawab, total pegawai & perangkat daerah) dan tabel rekap kondisi per perangkat daerah.
+  Setiap angka dapat diklik untuk membuka daftar kendaraan dengan filter terkait.
+- **Kendaraan Dinas** — daftar dengan pencarian (nomor polisi/merek/tipe; `B1234` cocok dengan
+  `B 1234 ABC`), filter kondisi, perangkat daerah, tahun produksi, dan "tanpa penanggung jawab";
+  sort & pagination. Kondisi tampil sebagai badge berwarna (hijau/kuning/merah) yang sekaligus
+  menjadi aksi cepat **ubah kondisi** (`PATCH`). Form: nomor polisi otomatis huruf besar &
+  dinormalisasi; dropdown penanggung jawab **dapat dicari** dan hanya berisi pegawai dari perangkat
+  daerah terpilih (nama + NIP + jabatan), otomatis dikosongkan saat perangkat daerah diganti.
+- **Pegawai** — pencarian nama/NIP, filter perangkat daerah & golongan, sort nama/golongan (urut
+  jenjang I/a → IV/e), input NIP 18 digit, halaman detail berisi kendaraan yang dipegang.
+- **Perangkat Daerah** — daftar dengan jumlah pegawai & kendaraan, detail dengan rekap kondisi,
+  daftar pegawai, dan daftar kendaraan.
+- **UX** — sidebar yang menjadi drawer di layar kecil, loading skeleton, empty state, toast,
+  dialog konfirmasi hapus (pesan penolakan relasi dari server tampil di dialog), error validasi
+  backend tampil per field, filter/pencarian/halaman tersimpan di query string URL, pencarian
+  dengan debounce 300 ms.
 
 ---
 
@@ -85,6 +107,14 @@ Container `api` otomatis menjalankan migrasi lalu seeder (idempoten, dapat dimat
 
 ### Testing
 
+- **Backend** (`bun test`, 53 test): validasi NIP, golongan, nomor polisi, tahun produksi; aturan
+  penanggung jawab satu perangkat daerah; penolakan hapus/pindah yang masih berelasi; duplikasi
+  → 409; pagination, filter, sort, dan agregasi dashboard.
+- **Frontend** (Vitest, 27 test): store Pinia (aksi CRUD dengan API di-mock, respons usang,
+  refresh dashboard), `PenanggungJawabSelect` (dependen PD, debounce, pilih/kosongkan), form
+  kendaraan (normalisasi nomor polisi, PD diganti → penanggung jawab dikosongkan, error backend per
+  field), dan helper query string.
+
 Test backend memakai database **terpisah** (`TEST_DATABASE_URL`, default `kdo_test`) yang dibuat
 otomatis oleh `docker/postgres/init.sql` saat volume Postgres pertama kali dibuat. Preload test
 menjalankan migrasi dan menolak berjalan bila nama database tidak mengandung `test`.
@@ -113,8 +143,12 @@ docker compose exec postgres psql -U kdo -c "CREATE DATABASE kdo_test"
 ├── frontend/                # Vue 3 SPA
 │   └── src/
 │       ├── api/             # instance axios terpusat + modul API per entitas
-│       ├── stores/          # Pinia setup store per entitas
-│       ├── views/ components/ composables/ schemas/ router/ types/ utils/
+│       ├── stores/          # Pinia setup store per entitas (pola bersama di stores/crud.ts)
+│       ├── views/           # Dashboard, kendaraan/, pegawai/, perangkat-daerah/ (List, Form, Detail)
+│       ├── components/      # ui/ (DataTable, Pagination, Modal, ConfirmDialog, …), kendaraan/, layout/
+│       ├── composables/     # useQueryFilters, useDebounce, useToast, useConfirmDelete
+│       ├── schemas/         # skema Zod form
+│       └── router/ types/ utils/
 ├── docker/postgres/init.sql # membuat database test
 ├── docker-compose.yml
 └── .env.example
@@ -194,17 +228,30 @@ Semua foreign key memakai `ON DELETE RESTRICT`. Index: seluruh FK, `kendaraan_di
 
 ## Endpoint API (prefix `/api/v1`)
 
-| Method         | Endpoint                 | Status    |
-| -------------- | ------------------------ | --------- |
-| GET            | `/health`                | ✅ Fase 0 |
-| GET/POST       | `/perangkat-daerah`      | Fase 1    |
-| GET/PUT/DELETE | `/perangkat-daerah/:id`  | Fase 1    |
-| GET/POST       | `/pegawai`               | Fase 2    |
-| GET/PUT/DELETE | `/pegawai/:id`           | Fase 2    |
-| GET/POST       | `/kendaraan`             | Fase 3    |
-| GET/PUT/DELETE | `/kendaraan/:id`         | Fase 3    |
-| PATCH          | `/kendaraan/:id/kondisi` | Fase 3    |
-| GET            | `/dashboard/ringkasan`   | Fase 4    |
+| Method | Endpoint | Keterangan |
+| --- | --- | --- |
+| GET | `/perangkat-daerah` | list + `jumlah_pegawai` & `jumlah_kendaraan`; `search`, `sort` (`nama`, `jumlah_pegawai`, `jumlah_kendaraan`, `created_at`) |
+| GET | `/perangkat-daerah/:id` | detail + `rekap_kondisi` |
+| POST | `/perangkat-daerah` | tambah |
+| PUT | `/perangkat-daerah/:id` | ubah |
+| DELETE | `/perangkat-daerah/:id` | hapus (409 bila masih memiliki pegawai/kendaraan) |
+| GET | `/pegawai` | list; filter `perangkat_daerah_id`, `golongan`; sort `nama`, `golongan`, `nip`, `jabatan` |
+| GET | `/pegawai/:id` | detail + `perangkat_daerah` + `kendaraan` yang dipegang |
+| POST | `/pegawai` | tambah |
+| PUT | `/pegawai/:id` | ubah (pindah PD ditolak bila masih penanggung jawab) |
+| DELETE | `/pegawai/:id` | hapus (409 bila masih penanggung jawab) |
+| GET | `/kendaraan` | list; filter `kondisi`, `perangkat_daerah_id`, `pegawai_id`, `tahun_produksi`, `tanpa_penanggung_jawab`; sort `nomor_polisi`, `merek`, `tipe_model`, `tahun_produksi`, `kondisi` |
+| GET | `/kendaraan/:id` | detail + `perangkat_daerah` + `penanggung_jawab` |
+| POST | `/kendaraan` | tambah |
+| PUT | `/kendaraan/:id` | ubah |
+| PATCH | `/kendaraan/:id/kondisi` | ubah kondisi saja |
+| DELETE | `/kendaraan/:id` | hapus |
+| GET | `/dashboard/ringkasan` | angka ringkasan + rekap kondisi per perangkat daerah (agregasi SQL `COUNT … FILTER` + `GROUP BY`) |
+| GET | `/health` | health check termasuk koneksi database |
+
+Semua list menerima `page`, `per_page` (maks 100), `search`, dan `sort` (awali `-` untuk menurun,
+mis. `-tahun_produksi`). ID di path divalidasi sebagai UUID (format salah → 422). Dokumentasi
+interaktif lengkap tersedia di `/docs`.
 
 ---
 
@@ -216,8 +263,11 @@ Semua foreign key memakai `ON DELETE RESTRICT`. Index: seluruh FK, `kendaraan_di
 - Hapus perangkat daerah ditolak (409 `RELASI_MASIH_DIGUNAKAN`) bila masih memiliki pegawai atau
   kendaraan; pesan menyebutkan jumlahnya.
 - Hapus pegawai ditolak (409) bila masih menjadi penanggung jawab; pesan menyebutkan nomor polisi.
-- Pindah perangkat daerah pegawai ditolak bila masih menjadi penanggung jawab kendaraan di perangkat
-  daerah lama.
+- Pindah perangkat daerah pegawai ditolak (409 `RELASI_MASIH_DIGUNAKAN`) bila masih menjadi
+  penanggung jawab kendaraan di perangkat daerah lama; pesan menyebutkan nomor polisinya.
+- Aturan lintas entitas dijalankan di service layer di dalam **transaksi**; baris yang dirujuk
+  dikunci (`FOR UPDATE` / `FOR SHARE`) agar tidak berubah atau terhapus di tengah proses.
+  `ON DELETE RESTRICT` di database menjadi pengaman kedua.
 - Duplikasi `nomor_polisi`, `nip`, atau `nama` perangkat daerah → 409 `DATA_DUPLIKAT` + nama field.
 
 ---
@@ -239,15 +289,29 @@ Semua foreign key memakai `ON DELETE RESTRICT`. Index: seluruh FK, `kendaraan_di
   port.
 - File `.env` tunggal di root dipakai backend (`--env-file=../.env`) dan frontend (`envDir`).
 - Lint & format memakai **Biome** (satu alat untuk TS; file `.vue` dicek `vue-tsc`).
+- **`per_page` > 100 di-clamp menjadi 100** (bukan ditolak), begitu juga `page` < 1 menjadi 1.
+- **Filter enum di query** (`kondisi`, `golongan`) divalidasi di service (nilai salah → 422).
+  Elysia mengisi nilai default pada `t.UnionEnum` opsional di query string, sehingga skema query
+  memakai string biasa.
+- **Perangkat daerah/pegawai yang dirujuk tidak ada** saat tambah/ubah → 422 `VALIDASI_GAGAL`
+  dengan detail field (`perangkat_daerah_id` / `pegawai_id`), bukan 404, karena kesalahan ada pada
+  isi body.
+- **`PUT` adalah penggantian penuh**: bila perangkat daerah kendaraan diganti sementara `pegawai_id`
+  masih pegawai PD lama, request ditolak (`PENANGGUNG_JAWAB_TIDAK_VALID`). Form frontend otomatis
+  mengosongkan penanggung jawab saat perangkat daerah diganti.
+- **Form tambah/ubah berupa halaman** (`/…/baru`, `/…/:id/ubah`) agar dapat dibuka langsung lewat
+  URL; konfirmasi hapus memakai dialog.
+- **Fitur opsional** (autentikasi JWT, riwayat penanggung jawab, ekspor Excel/PDF, soft delete)
+  belum dikerjakan karena hanya dikerjakan bila diminta.
 
 ---
 
 ## Roadmap
 
 - [x] **Fase 0** — Setup monorepo, docker-compose, Elysia + Drizzle, skema & migrasi, seeder, Vue +
-  Pinia + Router + Tailwind, layout dasar
-- [ ] **Fase 1** — Perangkat Daerah (API CRUD + test, store, halaman)
-- [ ] **Fase 2** — Pegawai (validasi NIP/golongan)
-- [ ] **Fase 3** — Kendaraan Dinas (aturan penanggung jawab, `PATCH kondisi`)
-- [ ] **Fase 4** — Dashboard ringkasan
-- [ ] **Fase 5** — Penyempurnaan UX, dokumentasi
+      Pinia + Router + Tailwind, layout dasar
+- [x] **Fase 1** — Perangkat Daerah (API CRUD + test, store, halaman)
+- [x] **Fase 2** — Pegawai (validasi NIP/golongan)
+- [x] **Fase 3** — Kendaraan Dinas (aturan penanggung jawab, `PATCH kondisi`)
+- [x] **Fase 4** — Dashboard ringkasan
+- [x] **Fase 5** — Penyempurnaan UX, dokumentasi OpenAPI, README

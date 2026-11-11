@@ -7,10 +7,15 @@ export interface PaginationMeta {
   total_pages: number
 }
 
-export interface SuccessResponse<T, M = undefined> {
+export interface SuccessResponse<T> {
   success: true
   data: T
-  meta?: M
+}
+
+export interface PaginatedResponse<T> {
+  success: true
+  data: T[]
+  meta: PaginationMeta
 }
 
 export interface ErrorResponse {
@@ -22,10 +27,7 @@ export function ok<T>(data: T): SuccessResponse<T> {
   return { success: true, data }
 }
 
-export function paginated<T>(
-  data: T[],
-  meta: PaginationMeta,
-): SuccessResponse<T[], PaginationMeta> {
+export function paginated<T>(data: T[], meta: PaginationMeta): PaginatedResponse<T> {
   return { success: true, data, meta }
 }
 

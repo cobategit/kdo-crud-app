@@ -7,6 +7,7 @@ function validationDetails(error: Readonly<ElysiaValidationError>): ErrorDetail[
   const details: ErrorDetail[] = []
   for (const issue of error.all) {
     const raw = 'path' in issue ? String(issue.path ?? '') : ''
+    // Path kosong terjadi pada skema transform (mis. t.Numeric di query); pakai lokasi error.
     const field = raw.replace(/^\//, '').replace(/\//g, '.') || error.type
     if (seen.has(field)) continue
     seen.add(field)
